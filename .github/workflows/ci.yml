@@ -1,0 +1,56 @@
+name: CI — Tempest Archive
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  quality-and-build:
+    name: Lint, Typecheck, Test, Build & Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify no .env secrets committed
+        run: |
+          if git ls-files --error-unmatch .env .env.local apps/web/.env.local >/dev/null 2>&1; then
+            echo "ERROR: Archivo .env detectado en el repositorio Git."
+            exit 1
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.22.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Security audit (high/critical)
+        run: pnpm audit --audit-level=high

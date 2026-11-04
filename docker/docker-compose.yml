@@ -1,0 +1,28 @@
+# ==============================================================================
+# Docker Compose de Referencia — Tempest Archive
+# ==============================================================================
+# NOTA IMPORTANTE (Sección 14.2 y ADR-002):
+# El entorno local cuenta con 3.84 GB de RAM. Por prioridad de la Sección 14,
+# el desarrollo y producción utilizan Supabase Cloud + Vercel sin levantar
+# contenedores locales. Este archivo se incluye para compatibilidad en servidores
+# CI/externos con límites de memoria explícitos.
+# ==============================================================================
+
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../.env.example
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
